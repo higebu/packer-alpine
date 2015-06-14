@@ -1,0 +1,69 @@
+{
+  "variables": {
+    "iso_file": "http://wiki.alpinelinux.org/cgi-bin/dl.cgi/v3.2/releases/x86_64/alpine-3.2.0-x86_64.iso",
+    "iso_checksum_value": "6f3402e77a9ed1e7c4bc0cde974a38cd72cf2ccf",
+    "product_name": "alpine",
+    "product_version": "3.2.0",
+    "product_arch": "amd64",
+    "headless": "true",
+    "disk_size": "30720",
+    "ssh_password": "alpine",
+    "ssh_wait_timeout": "5m",
+    "shutdown_command": "poweroff"
+  },
+  "builders": [
+    {
+      "vm_name": "{{user `product_name`}}-{{user `product_version`}}-{{user `product_arch`}}",
+      "vmdk_name": "{{user `product_name`}}-{{user `product_version`}}-{{user `product_arch`}}",
+      "type": "vmware-iso",
+      "headless": "{{user `headless`}}",
+      "disk_size": "{{user `disk_size`}}",
+      "disk_type_id": 0,
+      "guest_os_type": "other3xlinux-64",
+      "iso_url": "{{user `iso_file`}}",
+      "iso_checksum": "{{user `iso_checksum_value`}}",
+      "iso_checksum_type": "sha1",
+      "ssh_username": "root",
+      "ssh_password": "{{user `ssh_password`}}",
+      "ssh_wait_timeout": "{{user `ssh_wait_timeout`}}",
+      "shutdown_command": "{{user `shutdown_command`}}",
+      "http_directory": "http",
+      "vmx_data": {
+        "cpuid.coresPerSocket": "1",
+        "memsize": "512",
+        "numvcpus": "1",
+        "virtualhw.version": "8",
+        "ethernet0.present": "TRUE",
+        "ethernet0.startConnected": "TRUE",
+        "ethernet0.virtualDev": "vmxnet3",
+        "ethernet0.connectionType": "nat",
+        "ethernet1.present": "TRUE",
+        "ethernet1.startConnected": "TRUE",
+        "ethernet1.virtualDev": "vmxnet3",
+        "ethernet1.connectionType": "nat"
+      },
+      "boot_command": [
+        "root<enter><wait>",
+        "ifconfig eth0 up && udhcpc -i eth0<enter><wait5>",
+        "wget http://{{ .HTTPIP }}:{{ .HTTPPort }}/answers<enter><wait>",
+        "setup-alpine -f answers<enter><wait10>",
+        "alpine<enter><wait>",
+        "alpine<enter><wait10>",
+        "y<enter>",
+        "<wait10><wait10><wait10>",
+        "/etc/init.d/sshd stop<enter><wait>",
+        "eject -r<enter>",
+        "reboot<enter>"
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "/bin/sh -x '{{.Path}}'",
+      "script": "scripts/provisioning.sh"
+    }
+  ],
+  "post-processors": [
+  ]
+}
